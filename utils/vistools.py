@@ -40,7 +40,7 @@ def save_im_heatmap_box(im_file, top_maps, topk_boxes, save_dir, gt_label=None, 
         if gt_box is not None:
             gt_box = np.asarray(gt_box, int)
             cv2.rectangle(draw_im, (gt_box[0], gt_box[1]), (gt_box[2], gt_box[3]), color=(0, 0, 255), thickness=2)
-        if gt_label is not None:
+        if gt_label is not None:    
             cls_str = 'TRUE' if int(cls_box[0]) == int(gt_label) else 'False'
         else:
             cls_str = 'classified as {}'.format(cls_box[0])

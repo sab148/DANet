@@ -169,6 +169,7 @@ def val(args):
 
     thresholds = map(float, args.threshold.split(','))
     thresholds = list(thresholds)
+
     for th in thresholds:
         top1_locerr.reset()
         top5_locerr.reset()
@@ -181,6 +182,7 @@ def val(args):
             img_var, label_var = Variable(img), Variable(label)
             logits = model(img_var)
             child_map = F.upsample(model.module.get_child_maps(), size=(28, 28), mode='bilinear', align_corners=True)
+            print 'child_map', child_map.size()
             child_map = child_map.cpu().data.numpy()
             parent_maps = F.upsample(model.module.get_parent_maps(), size=(28, 28), mode='bilinear', align_corners=True)
             parent_maps = parent_maps.cpu().data.numpy()
@@ -192,12 +194,14 @@ def val(args):
 
             # update result record
             locerr_1, locerr_5 = evaluate.locerr((top1_box, top5_boxes), label.cpu().data.long().numpy(), gt_boxes[idx], topk=(1, 5))
+            
             top1_locerr.update(locerr_1, img.size()[0])
             top5_locerr.update(locerr_5, img.size()[0])
             if DEBUG:
                 if idx in show_idxs:
                     save_im_heatmap_box(img_path[0], top_maps, top5_boxes, '../figs/', gt_label=label.cpu().data.long().numpy(),
                                         gt_box=gt_boxes[idx])
+
         print('=========== threshold: {} ==========='.format(th))
         print('== loc err')
         print('Top1: {:.2f} Top5: {:.2f}\n'.format(top1_locerr.avg, top5_locerr.avg))

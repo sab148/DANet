@@ -51,7 +51,7 @@ def get_arguments():
     parser.add_argument("--vis_name", type=str, default='DA')
     parser.add_argument("--batch_size", type=int, default=30)
     parser.add_argument("--input_size", type=int, default=256)
-    parser.add_argument("--crop_size", type=int, default=224)
+    parser.add_argument("--crop_size", type=int, default=256)
     parser.add_argument("--dataset", type=str, default='cub')
     parser.add_argument("--num_classes", type=int, default=200)
     parser.add_argument("--arch", type=str, default='vgg')
@@ -84,6 +84,8 @@ def save_checkpoint(args, state, is_best, filename='checkpoint.pth.tar'):
 
 def get_model(args):
     model = eval(args.arch).model(pretrained=True,
+                                  num_stacks=3,
+                                  num_blocks=2,
                                   num_classes=args.num_classes)
     model.cuda()
     model = torch.nn.DataParallel(model, range(args.num_gpu))
@@ -167,7 +169,7 @@ def train(args):
             img, label = img.cuda(), label[2].cuda()
             img_var,label3_var = Variable(img), Variable(label)
 
-            logits = model(img_var)
+            logits = model(img_var,label3_var)
             loss_val = model.module.get_loss(logits, label3_var)
 
             # write into tensorboard
@@ -179,7 +181,7 @@ def train(args):
             optimizer.step()
 
             if not args.onehot == 'True':
-                logits1 = torch.squeeze(logits)
+                logits1 = torch.squeeze(logits[0])
                 prec1, prec5 = evaluate.accuracy(logits1.data, label.long(), topk=(1, 5))
                 top1.update(prec1[0], img.size()[0])
                 top5.update(prec5[0], img.size()[0])
@@ -206,9 +208,9 @@ def train(args):
                        current_epoch, global_counter % len(train_loader), len(train_loader), batch_time=batch_time,
                        eta_str=eta_str, eta_str_epoch=eta_str_epoch, loss=losses, top1=top1, top5=top5))
 
-        plotter.plot('Loss', 'train', current_epoch, losses.avg)
-        plotter.plot('top1', 'train', current_epoch, top1.avg)
-        plotter.plot('top5', 'train', current_epoch, top5.avg)
+        plotter.plot('Loss', 'train', current_epoch, losses.avg.item())
+        plotter.plot('top1', 'train', current_epoch, top1.avg.item())
+        plotter.plot('top5', 'train', current_epoch, top5.avg.item())
 
 
 

@@ -20,6 +20,7 @@ from utils.loader import data_loader
 from utils.restore import restore
 from utils.localization import get_topk_boxes
 from utils.vistools import save_im_heatmap_box
+from utils import test
 from models import *
 
 # default settings
@@ -46,7 +47,7 @@ def get_arguments():
     parser.add_argument("--test_box", type=str, default=testbox_list)
     parser.add_argument("--batch_size", type=int, default=1)
     parser.add_argument("--input_size", type=int, default=256)
-    parser.add_argument("--crop_size", type=int, default=224)
+    parser.add_argument("--crop_size", type=int, default=256)
     parser.add_argument("--dataset", type=str, default='cub')
     parser.add_argument("--num_classes", type=int, default=200)
     parser.add_argument("--arch", type=str, default='vgg')
@@ -69,7 +70,9 @@ def get_arguments():
 
 
 def get_model(args):
-    model = eval(args.arch).model(num_classes=args.num_classes)
+    model = eval(args.arch).model(num_stacks=3,
+                                  num_blocks=2,
+                                  num_classes=args.num_classes)
     model = torch.nn.DataParallel(model, range(args.num_gpu))
     model.cuda()
 
@@ -100,7 +103,7 @@ def val(args):
     model.eval()
 
     # get data
-    _, valcls_loader, valloc_loader = data_loader(args, test_path=True)
+    train_loader, valcls_loader, valloc_loader = data_loader(args, test_path=True)
     assert len(valcls_loader) == len(valloc_loader), \
         'Error! Different size for two dataset: loc({}), cls({})'.format(len(valloc_loader), len(valcls_loader))
 
@@ -113,12 +116,16 @@ def val(args):
         np.random.shuffle(show_idxs)
         show_idxs = show_idxs[:20]
 
+
+
+
     # evaluation classification task
     pred_prob = []
     for dat in tqdm(valcls_loader):
         # parse data
         img_path, img, label_in = dat
         if args.tencrop == 'True':
+            print 'img.size()', img.size()
             bs, ncrops, c, h, w = img.size()
             img = img.view(-1, c, h, w)
             label_input = label_in.repeat(10, 1)
@@ -129,10 +136,10 @@ def val(args):
         # forward pass
         img, label = img.cuda(), label.cuda()
         img_var, label_var = Variable(img), Variable(label)
-        logits = model(img_var)
+        logits = model(img_var,label_var)
 
         # get classification prob
-        logits0 = logits
+        logits0 = logits[0]
         logits0 = F.softmax(logits0, dim=1)
         if args.tencrop == 'True':
             logits0 = logits0.view(1, ncrops, -1).mean(1)
@@ -153,8 +160,10 @@ def val(args):
     #     pred_prob = cPickle.load(f)
     # evaluation localization task
     thresholds = map(float, args.threshold.split(','))
-    thresholds = list(thresholds)
+    thresholds = [0.05,0.1,0.15,0.2,0.25,0.3] #list(thresholds)
+    
     for th in thresholds:
+
         top1_locerr.reset()
         top5_locerr.reset()
         for idx, dat in tqdm(enumerate(valloc_loader)):
@@ -164,10 +173,11 @@ def val(args):
             # forward pass
             img, label = img.cuda(), label.cuda()
             img_var, label_var = Variable(img), Variable(label)
-            logits = model(img_var)
+            logits = model(img_var, label_var)
 
             # get localization boxes
             cam_map = model.module.get_cam_maps()  # not normalized
+       
             cam_map = cam_map.cpu().data.numpy()
             top_boxes, top_maps = get_topk_boxes(pred_prob[idx, :], cam_map, img_path[0], args.input_size,
                                                  args.crop_size, topk=(1, 5), threshold=th, mode='union')
@@ -175,15 +185,19 @@ def val(args):
 
             # update result record
             locerr_1, locerr_5 = evaluate.locerr((top1_box, top5_boxes), label.cpu().data.long().numpy(), gt_boxes[idx], topk=(1, 5))
+
             top1_locerr.update(locerr_1, img.size()[0])
             top5_locerr.update(locerr_5, img.size()[0])
             if VISLOC:
                 if idx in show_idxs:
                     save_im_heatmap_box(img_path[0], top_maps, top5_boxes, '../figs/', gt_label=label.cpu().data.long().numpy(),
                                         gt_box=gt_boxes[idx])
+
         print('=========== threshold: {} ==========='.format(th))
         print('== loc err')
         print('Top1: {:.2f} Top5: {:.2f}\n'.format(top1_locerr.avg, top5_locerr.avg))
+
+        
 
 
 if __name__ == '__main__':

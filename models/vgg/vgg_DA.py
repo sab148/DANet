@@ -173,6 +173,7 @@ class VGG(nn.Module):
 
 
     def get_child_maps(self):
+        print 'self.child_map', self.child_map.size()
         return torch.mean(F.relu(self.child_map), dim=2)
         # return self.child_map
 

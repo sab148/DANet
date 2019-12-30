@@ -13,8 +13,9 @@ def accuracy(logits, target, topk=(1,)):
     maxk = max(topk)
     batch_size = target.size(0)
     scores = logits
-
+    #print 'target', target
     _, pred = scores.topk(maxk, 1, True, True)
+    #print 'pred', pred
     pred = pred.t()
     correct = pred.eq(target.view(1, -1).expand_as(pred))
 
@@ -29,16 +30,16 @@ def locerr(topk_boxes, gt_labels, gt_boxes, topk=(1,)):
     assert len(topk_boxes) == len(topk)
     gt_label = gt_labels[0]
     gt_box = gt_boxes
-
     topk_rslt = []
+    
     for topk_box in topk_boxes:
         err = 1
         for cls_box in topk_box:
             if cls_box[0] == gt_label and cal_iou(cls_box[1:], gt_box) > 0.5:
-                err = 0
+                err = 0             
                 break
         topk_rslt.append(float(err*100.0))
-
+       
     return topk_rslt
 
 def colocerr(topk_boxes, gt_labels, gt_boxes, topk=(1,)):
@@ -52,6 +53,7 @@ def colocerr(topk_boxes, gt_labels, gt_boxes, topk=(1,)):
         for cls_box in topk_box:
             if cal_iou(cls_box[1:], gt_box) > 0.5:
                 err = 0
+
                 break
         topk_rslt.append(float(err*100.0))
 

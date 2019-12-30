@@ -2,7 +2,7 @@
 
 cd ../exper/
 
-CUDA_VISIBLE_DEVICES=0 python val_hierarchy.py \
+CUDA_VISIBLE_DEVICES=0 python2 val_hierarchy.py \
 	--arch=vgg_DA \
     --num_gpu=1 \
     --dataset=cub \

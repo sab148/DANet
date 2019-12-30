@@ -2,8 +2,8 @@
 
 cd ../exper/
 
-CUDA_VISIBLE_DEVICES=0 python val_CAM.py \
-	--arch=vgg \
+CUDA_VISIBLE_DEVICES=0 python2 val_CAM.py \
+	--arch=hourglass3 \
     --batch_size=1 \
     --num_gpu=1 \
     --dataset=cub \

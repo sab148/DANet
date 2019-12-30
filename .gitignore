@@ -1,0 +1,16 @@
+exper/alpha.csv
+exper/beta.csv
+exper/data.txt
+exper/label.csv
+exper/*.png
+fig2/
+fig3/
+fig4/
+log/
+data/CUB_200_2011/attributes
+data/CUB_200_2011/images
+data/CUB_200_2011/parts
+tkharbish/
+snapshots/
+
+

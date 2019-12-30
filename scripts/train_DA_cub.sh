@@ -2,7 +2,7 @@
 
 cd ../exper/
 
-CUDA_VISIBLE_DEVICES=0 python train_DA.py \
+CUDA_VISIBLE_DEVICES=0 python2 train_DA.py \
 	--arch=vgg_DA \
     --epoch=100 \
     --lr=0.001 \

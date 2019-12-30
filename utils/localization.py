@@ -138,3 +138,79 @@ def extract_bbox_from_map(boolen_map):
     ymin, ymax = np.where(rows)[0][[0, -1]]
     xmin, xmax = np.where(cols)[0][[0, -1]]
     return xmin, ymin, xmax, ymax
+
+def get_top_cam(logits, cam_map, im_file, input_size, crop_size, topk=(1, ), threshold=0.2, mode='union', gt=None):
+    maxk = max(topk)
+    maxk_cls = np.argsort(logits)[::-1][:maxk]
+    # get original image size and scale
+    name = im_file.split('/')[-1]
+    
+    im = cv2.imread(im_file)
+    h, w, _ = np.shape(im)
+
+    maxk_boxes = []
+    maxk_maps = []
+    for cls in maxk_cls:
+        if gt:
+            cls = gt
+        cam_map_ = cam_map[0, cls, :, :]
+        cam_map_ = norm_atten_map(cam_map_)  # normalize cam map
+        cam_map_cls = cv2.resize(cam_map_, dsize=(w, h))
+        maxk_maps.append(cam_map_cls.copy())
+
+        # segment the foreground
+        fg_map = cam_map_cls >= threshold
+        p = '/home/narimene/Desktop/ph_cam/'
+        name_dir = p+im_file.split('/')[-2]
+        
+        if not os.path.exists(name_dir):
+            dire = os.mkdir(name_dir)
+        
+        dire = im_file.split('/')[-2]
+        path = p+dire
+
+        maps = np.expand_dims(maxk_maps[0], axis=3) 
+        img = im * maps
+
+        cv2.imwrite(os.path.join(path , name), img)
+        #cv2.waitKey(0)
+    
+    return maxk_maps
+
+
+def get_cam(logits, cam_map, im_file, input_size, crop_size, topk=(1, ), threshold=0.2, mode='union', gt=None):
+    maxk = max(topk)
+    maxk_cls = np.argsort(logits)[::-1][:maxk]
+    # get original image size and scale
+    name = im_file.split('/')[-1]
+    
+    im = cv2.imread(im_file)
+    h, w, _ = np.shape(im)
+
+    maxk_boxes = []
+    maxk_maps = []
+    for cls in maxk_cls:
+        if gt:
+            cls = gt
+        cam_map_ = cam_map[0, cls, :, :]
+        cam_map_ = norm_atten_map(cam_map_)  # normalize cam map
+        cam_map_cls = cv2.resize(cam_map_, dsize=(w, h))
+        maxk_maps.append(cam_map_cls.copy())
+
+        # segment the foreground
+        fg_map = cam_map_cls >= threshold
+
+    name_dir = '/home/narimene/Desktop/ph_cam/'+im_file.split('/')[-2]
+    if not os.path.exists(name_dir):
+        dire = os.mkdir(name_dir)
+    
+    dire = im_file.split('/')[-2]
+    path = '/home/narimene/Desktop/ph_cam/'+dire
+
+    maps = np.expand_dims(maxk_maps[0], axis=3) 
+    img = im * maps
+
+    cv2.imwrite(os.path.join(path , name), img)
+    #cv2.waitKey(0)
+
+    return maxk_maps

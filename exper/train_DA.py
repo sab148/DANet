@@ -246,16 +246,16 @@ def train(args):
                     top1=top1, top5=top5, top1_parent=top1_parent, top5_parent=top5_parent, top1_root=top1_root,
                     top5_root=top5_root, lossCos = lossCos,))
 
-        plotter.plot('rootLoss', 'train', current_epoch, loss_root.avg)
-        plotter.plot('childLoss', 'train', current_epoch, loss_child.avg)
-        plotter.plot('parentLoss', 'train', current_epoch, loss_parent.avg)
-        plotter.plot('cosLoss', 'train', current_epoch, lossCos.avg)
-        plotter.plot('top1', 'train', current_epoch, top1.avg)
-        plotter.plot('top5', 'train', current_epoch, top5.avg)
-        plotter.plot('parent Top1', 'train', current_epoch, top1_parent.avg)
-        plotter.plot('parent Top5', 'train', current_epoch, top5_parent.avg)
-        plotter.plot('root Top1', 'train', current_epoch, top1_root.avg)
-        plotter.plot('root Top5', 'train', current_epoch, top5_root.avg)
+        plotter.plot('rootLoss', 'train', current_epoch, loss_root.avg.item())
+        plotter.plot('childLoss', 'train', current_epoch, loss_child.avg.item())
+        plotter.plot('parentLoss', 'train', current_epoch, loss_parent.avg.item())
+        plotter.plot('cosLoss', 'train', current_epoch, lossCos.avg.item())
+        plotter.plot('top1', 'train', current_epoch, top1.avg.item())
+        plotter.plot('top5', 'train', current_epoch, top5.avg.item())
+        plotter.plot('parent Top1', 'train', current_epoch, top1_parent.avg.item())
+        plotter.plot('parent Top5', 'train', current_epoch, top5_parent.avg.item())
+        plotter.plot('root Top1', 'train', current_epoch, top1_root.avg.item())
+        plotter.plot('root Top5', 'train', current_epoch, top5_root.avg.item())
 
         current_epoch += 1
         if current_epoch % 50 == 0:

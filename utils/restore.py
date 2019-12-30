@@ -26,7 +26,8 @@ def restore(args, model, optimizer, istrain=True, including_opt=False):
                 args.global_counter = checkpoint['global_counter'] + 1
                 if including_opt:
                     optimizer.load_state_dict(checkpoint['optimizer'])
-            model.load_state_dict(checkpoint['state_dict'])
+            
+            model.load_state_dict(checkpoint['state_dict'], strict=False)
             print("=> loaded checkpoint '{}' (epoch {})"
                   .format(snapshot, checkpoint['epoch']))
         except KeyError:
